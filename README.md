@@ -4,8 +4,6 @@
 
 Uma ferramenta completa, robusta e com design premium para converter arrays de objetos JSON em CSV. Construída com as tecnologias mais modernas do ecossistema .NET.
 
-![Preview](screenshot.png)
-
 ### Funcionalidades
 - Conversão instantânea de array de objetos JSON → CSV  
 - Mantém exatamente a ordem dos campos do primeiro objeto  
