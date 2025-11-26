@@ -1,0 +1,258 @@
+﻿@page "/"
+@using Json2CsvConverter.Services
+@using MudBlazor
+@inject JsonConversionService Converter
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-10">
+    <MudPaper Class="pa-10 rounded-xl" Elevation="8">
+        
+        <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-2" Color="Color.Primary">
+            Conversor JSON → CSV
+        </MudText>
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-8" Color="Color.Secondary">
+            feito por <strong>Emilio Nicolau Rossini</strong>
+        </MudText>
+
+        <MudGrid Spacing="6">
+            <MudItem xs="12">
+                <MudTextField @bind-Value="JsonInput"
+                              Label="Cole seu JSON aqui (array de objetos)"
+                              Variant="Variant.Outlined"
+                              Lines="14"
+                              Placeholder='[ { "nome": "Emilio", "idade": 39 } ]'
+                              Class="json-textfield"/>
+            </MudItem>
+
+            <MudItem xs="12">
+                <div class="d-flex justify-center gap-4 flex-wrap">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               Size="Size.Large" 
+                               StartIcon="@Icons.Material.Filled.PlayArrow"
+                               OnClick="Convert">
+                        Converter para CSV
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Secondary" 
+                               Size="Size.Large" 
+                               StartIcon="@Icons.Material.Filled.Clear"
+                               OnClick="ClearAll">
+                        Limpar tudo
+                    </MudButton>
+                    @if (!string.IsNullOrWhiteSpace(CsvOutput))
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Success" 
+                                   Size="Size.Large" 
+                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                   OnClick="CopyToClipboard">
+                            Copiar CSV
+                        </MudButton>
+                    }
+                </div>
+            </MudItem>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Error" 
+                              Variant="Variant.Filled" 
+                              Class="mud-alert-error">
+                        @ErrorMessage
+                    </MudAlert>
+                </MudItem>
+            }
+            else if (ShowSuccess)
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Success" 
+                              Variant="Variant.Filled" 
+                              Class="mud-alert-success" 
+                              Dismissable="true">
+                        Convertido com sucesso! CSV copiado para área de transferência.
+                    </MudAlert>
+                </MudItem>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(CsvOutput))
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h5" Class="mb-3" Color="Color.Info">
+                        Resultado em CSV
+                    </MudText>
+                    <MudTextField @bind-Value="CsvOutput"
+                                  Variant="Variant.Filled"
+                                  ReadOnly="true"
+                                  Lines="8"
+                                  Class="mb-8 csv-output"/>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h5" Class="mb-4" Color="Color.Info">
+                        Pré-visualização da tabela
+                    </MudText>
+                    <MudTable Items="@TableRows" 
+                              Hover="true" 
+                              Dense="false" 
+                              Bordered="true" 
+                              Striped="true"
+                              Elevation="6"
+                              FixedHeader="true"
+                              Height="500px">
+                        <HeaderContent>
+                            @foreach (var header in TableHeaders)
+                            {
+                                <MudTh Style="background-color: #1565c0; color: white; font-weight: 700; text-align: center;">
+                                    @header
+                                </MudTh>
+                            }
+                        </HeaderContent>
+                        <RowTemplate>
+                            @foreach (var header in TableHeaders)
+                            {
+                                var value = context.GetValueOrDefault(header, "");
+                                <MudTd DataLabel="@header" 
+                                       Style="@(string.IsNullOrWhiteSpace(value) ? "background-color: #fff3e0; color: #e65100;" : "background-color: #e3f2fd;")">
+                                    @(string.IsNullOrWhiteSpace(value) ? "— vazio —" : value)
+                                </MudTd>
+                            }
+                        </RowTemplate>
+                    </MudTable>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+<style>
+    .json-textfield .mud-input-control-input-container {
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.95rem;
+    }
+    .csv-output .mud-input-slot {
+        background-color: #f8f9fa;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+    .mud-alert-error {
+        background-color: #c62828 !important;
+        color: white !important;
+    }
+    .mud-alert-success {
+        background-color: #2e7d32 !important;
+        color: white !important;
+    }
+</style>
+
+@code {
+    private string JsonInput = @"[
+  {
+    ""id"": 1,
+    ""nome"": ""Emilio Nicolau Rossini"",
+    ""idade"": 28,
+    ""email"": ""emilio.rossini@yardim.com.br"",
+    ""ativo"": true,
+    ""cidade"": ""Juiz de Fora-MG"",
+    ""data_cadastro"": ""2024-01-15T10:30:00Z"",
+    ""salario"": 15342.75
+  },
+  {
+    ""id"": 3,
+    ""nome"": ""Liliane Carvalho"",
+    ""idade"": 22,
+    ""email"": ""liliane@yardim.com.br"",
+    ""ativo"": true,
+    ""cidade"": ""Ipatinga-MG"",
+    ""data_cadastro"": ""2025-03-10T09:15:00Z"",
+    ""salario"": 14200.50
+  }
+]";
+
+    private string CsvOutput = "";
+    private string ErrorMessage = "";
+    private bool ShowSuccess = false;
+    private List<string> TableHeaders = new();
+    private List<Dictionary<string, string>> TableRows = new();
+
+    private async Task Convert()
+    {
+        ErrorMessage = "";
+        ShowSuccess = false;
+        CsvOutput = "";
+        TableHeaders.Clear();
+        TableRows.Clear();
+
+        var result = Converter.ConvertJsonToCsv(JsonInput);
+
+        if (!result.Success)
+        {
+            ErrorMessage = result.Error;
+            return;
+        }
+
+        CsvOutput = result.Csv;
+        ShowSuccess = true;
+
+        var lines = result.Csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length > 0)
+        {
+            TableHeaders = lines[0].Split(',').Select(h => h.Trim('"')).ToList();
+            TableRows = lines.Skip(1)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Select(line =>
+                {
+                    var values = ParseCsvLine(line);
+                    return TableHeaders.Zip(values, (h, v) => new { h, v })
+                                      .ToDictionary(x => x.h, x => x.v);
+                })
+                .ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private string[] ParseCsvLine(string line)
+    {
+        var values = new List<string>();
+        var current = "";
+        var inQuotes = false;
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            if (line[i] == '"')
+            {
+                inQuotes = !inQuotes;
+            }
+            else if (line[i] == ',' && !inQuotes)
+            {
+                values.Add(current);
+                current = "";
+            }
+            else
+            {
+                current += line[i];
+            }
+        }
+        values.Add(current);
+        return values.Select(v => v.Trim('"')).ToArray();
+    }
+
+    private void ClearAll()
+    {
+        JsonInput = "";
+        CsvOutput = "";
+        ErrorMessage = "";
+        ShowSuccess = false;
+        TableHeaders.Clear();
+        TableRows.Clear();
+        StateHasChanged();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", CsvOutput);
+        ShowSuccess = true;
+        StateHasChanged();
+    }
+}
