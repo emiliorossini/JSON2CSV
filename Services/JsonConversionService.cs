@@ -86,12 +86,12 @@ public class JsonConversionService
 
             var sb = new StringBuilder();
 
-            sb.AppendLine(string.Join(",", orderedHeaders.Select(EscapeCsv)));
+            sb.AppendLine(string.Join(";", orderedHeaders.Select(EscapeCsv)));
 
             foreach (var row in rows)
             {
                 var values = orderedHeaders.Select(h => row.TryGetValue(h, out var val) ? EscapeCsv(val) : "");
-                sb.AppendLine(string.Join(",", values));
+                sb.AppendLine(string.Join(";", values));
             }
 
             return (true, sb.ToString(), "");

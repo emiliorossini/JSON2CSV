@@ -197,7 +197,7 @@
         var lines = result.Csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length > 0)
         {
-            TableHeaders = lines[0].Split(',').Select(h => h.Trim('"')).ToList();
+            TableHeaders = lines[0].Split(';').Select(h => h.Trim('"')).ToList();
             TableRows = lines.Skip(1)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .Select(line =>
@@ -224,7 +224,7 @@
             {
                 inQuotes = !inQuotes;
             }
-            else if (line[i] == ',' && !inQuotes)
+            else if (line[i] == ';' && !inQuotes)
             {
                 values.Add(current);
                 current = "";
